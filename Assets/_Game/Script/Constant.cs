@@ -9,5 +9,6 @@ namespace TC
         public static string WALL = "Wall";
         public static string CHARACTER = "Character";
         public static string EMPTY = "Empty";
+        public static string TARGET = "Target";
     }
 }

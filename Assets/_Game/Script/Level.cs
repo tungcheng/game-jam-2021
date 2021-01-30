@@ -15,10 +15,12 @@ namespace TC
 
         [Header("Debug")]
         public List<Character> listCharacter;
+        public List<Target> listTarget;
         public Vector2 levelSize;
         public Vector2 gridSize;
         public Vector2 halfGridSize;
         public Vector2 offsetPos;
+        public bool isSolve;
 
         // Start is called before the first frame update
         void Start()
@@ -29,6 +31,8 @@ namespace TC
         // Update is called once per frame
         void Update()
         {
+            if (isSolve) return;
+
             if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 MoveCharacter(Vector2Int.left);
@@ -82,7 +86,15 @@ namespace TC
                     listCharacter.Add(character);
                     grids[grid.x, grid.y] = Constant.CHARACTER;
                 }
+                else if (obj.name == Constant.TARGET)
+                {
+                    var target = obj.GetComponent<Target>();
+                    target.grid = grid;
+                    listTarget.Add(target);
+                }
             }
+
+            isSolve = false;
         }
 
         Vector2Int LocalPosToGrid(Vector3 localPos)
@@ -123,10 +135,25 @@ namespace TC
                 }
             }
 
+            var count = 0;
             foreach (var character in listCharacter)
             {
                 character.grid = LocalPosToGrid(character.transform.localPosition);
                 grids[character.grid.x, character.grid.y] = Constant.CHARACTER;
+
+                foreach (var target in listTarget)
+                {
+                    if (character.grid == target.grid)
+                    {
+                        count++;
+                        break;
+                    }
+                }
+            }
+
+            if (count == listCharacter.Count)
+            {
+                isSolve = true;
             }
         }
 
