@@ -16,6 +16,10 @@ namespace TC
         [Header("Debug")]
         public Transform character;
         public Vector2Int charGrid;
+        public Vector2 levelSize;
+        public Vector2 gridSize;
+        public Vector2 halfGridSize;
+        public Vector2 offsetPos;
 
         // Start is called before the first frame update
         void Start()
@@ -28,29 +32,29 @@ namespace TC
         {
             if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
-                Debug.Log("GridMove: " + GetGridMove(charGrid, Vector2Int.left));
+                MoveCharacter(Vector2Int.left);
             }
             else if (Input.GetKeyDown(KeyCode.RightArrow))
             {
-                Debug.Log("GridMove: " + GetGridMove(charGrid, Vector2Int.right));
+                MoveCharacter(Vector2Int.right);
             }
             else if (Input.GetKeyDown(KeyCode.UpArrow))
             {
-                Debug.Log("GridMove: " + GetGridMove(charGrid, Vector2Int.up));
+                MoveCharacter(Vector2Int.up);
             }
             else if (Input.GetKeyDown(KeyCode.DownArrow))
             {
-                Debug.Log("GridMove: " + GetGridMove(charGrid, Vector2Int.down));
+                MoveCharacter(Vector2Int.down);
             }
         }
 
         [Button]
         public void MakeGridLevel()
         {
-            var levelSize = new Vector2(bg.localScale.x, bg.localScale.y);
-            var gridSize = new Vector2(1, 1);
-            var halfGridSize = gridSize * 0.5f;
-            var offsetPos = Vector2.zero - levelSize * 0.5f;
+            levelSize = new Vector2(bg.localScale.x, bg.localScale.y);
+            gridSize = new Vector2(1, 1);
+            halfGridSize = gridSize * 0.5f;
+            offsetPos = Vector2.zero - levelSize * 0.5f;
 
             var childsT = childs.GetComponentsInChildren<Transform>().Where(x => x != childs).ToList();
             grids = new string[(int)levelSize.x, (int)levelSize.y];
@@ -66,11 +70,7 @@ namespace TC
             foreach (var child in childsT)
             {
                 var obj = child.gameObject;
-                var grid = new Vector2Int
-                {
-                    x = Mathf.RoundToInt((child.localPosition.x - halfGridSize.x - offsetPos.x)),
-                    y = Mathf.RoundToInt((child.localPosition.y - halfGridSize.y - offsetPos.y))
-                };
+                var grid = LocalPosToGrid(child.localPosition);
                 
                 if (obj.name == Constant.WALL)
                 {
@@ -82,6 +82,30 @@ namespace TC
                     charGrid = grid;
                 }
             }
+        }
+
+        Vector2Int LocalPosToGrid(Vector3 localPos)
+        {
+            return new Vector2Int
+            {
+                x = Mathf.RoundToInt((localPos.x - halfGridSize.x - offsetPos.x)),
+                y = Mathf.RoundToInt((localPos.y - halfGridSize.y - offsetPos.y))
+            };
+        }
+
+        Vector3 GridToLocalPos(Vector2Int grid)
+        {
+            return new Vector3
+            {
+                x = grid.x + halfGridSize.x + offsetPos.x,
+                y = grid.y + halfGridSize.y + offsetPos.y
+            };
+        }
+
+        void MoveCharacter(Vector2Int direction)
+        {
+            charGrid = GetGridMove(charGrid, direction);
+            character.localPosition = GridToLocalPos(charGrid);
         }
 
         Vector2Int GetGridMove(Vector2Int from, Vector2Int direction)
