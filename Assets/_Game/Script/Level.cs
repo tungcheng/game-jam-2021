@@ -14,8 +14,7 @@ namespace TC
         public string[,] grids;
 
         [Header("Debug")]
-        public Transform character;
-        public Vector2Int charGrid;
+        public List<Character> listCharacter;
         public Vector2 levelSize;
         public Vector2 gridSize;
         public Vector2 halfGridSize;
@@ -78,8 +77,10 @@ namespace TC
                 }
                 else if (obj.name == Constant.CHARACTER)
                 {
-                    character = child;
-                    charGrid = grid;
+                    var character = obj.GetComponent<Character>();
+                    character.grid = grid;
+                    listCharacter.Add(character);
+                    grids[grid.x, grid.y] = Constant.CHARACTER;
                 }
             }
         }
@@ -104,37 +105,70 @@ namespace TC
 
         void MoveCharacter(Vector2Int direction)
         {
-            charGrid = GetGridMove(charGrid, direction);
-            character.localPosition = GridToLocalPos(charGrid);
+            foreach (var character in listCharacter)
+            {
+                var charGrid = character.grid;
+                charGrid = GetGridMove(charGrid, direction);
+                character.transform.localPosition = GridToLocalPos(charGrid);
+            }
+
+            for (int x = 0; x < grids.GetLength(0); x++)
+            {
+                for (int y = 0; y < grids.GetLength(1); y++)
+                {
+                    if (grids[x, y] == Constant.CHARACTER)
+                    {
+                        grids[x, y] = Constant.EMPTY;
+                    }
+                }
+            }
+
+            foreach (var character in listCharacter)
+            {
+                character.grid = LocalPosToGrid(character.transform.localPosition);
+                grids[character.grid.x, character.grid.y] = Constant.CHARACTER;
+            }
         }
 
         Vector2Int GetGridMove(Vector2Int from, Vector2Int direction)
         {
             var gridTo = from;
+            var countChar = 0;
             while (direction.x != 0)
             {
                 var x = gridTo.x + direction.x;
                 if (x >= 0 && x < grids.GetLength(0) && grids[x, gridTo.y] != Constant.WALL)
                 {
                     gridTo.x = x;
+                    if (grids[x, gridTo.y] == Constant.CHARACTER)
+                    {
+                        countChar++;
+                    }
                 }
                 else
                 {
                     break;
                 }
             }
+            gridTo.x -= direction.x * countChar;
+            countChar = 0;
             while (direction.y != 0)
             {
                 var y = gridTo.y + direction.y;
                 if (y >= 0 && y < grids.GetLength(1) && grids[gridTo.x, y] != Constant.WALL)
                 {
                     gridTo.y = y;
+                    if (grids[gridTo.x, y] == Constant.CHARACTER)
+                    {
+                        countChar++;
+                    }
                 }
                 else
                 {
                     break;
                 }
             }
+            gridTo.y -= direction.y * countChar;
             return gridTo;
         }
     }

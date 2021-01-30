@@ -4,13 +4,14 @@ using UnityEngine;
 
 namespace TC
 {
-    public class GameController : MonoBehaviour
+    public class Character : MonoBehaviour
     {
+        public Vector2Int grid;
+
         // Start is called before the first frame update
         void Start()
         {
-            var level = FindObjectOfType<Level>();
-            level.MakeGridLevel();
+
         }
 
         // Update is called once per frame
