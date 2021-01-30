@@ -44,3 +44,6 @@ TagManager:
   - name: GamePlay
     uniqueID: 3612604593
     locked: 0
+  - name: Character
+    uniqueID: 3836407379
+    locked: 0
