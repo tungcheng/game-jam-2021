@@ -7,6 +7,9 @@ namespace TC
     public class Character : MonoBehaviour
     {
         public Vector2Int grid;
+        public bool isMoveFirst;
+        public bool isFinish;
+        public GameObject objFeet;
 
         // Start is called before the first frame update
         void Start()
@@ -18,6 +21,11 @@ namespace TC
         void Update()
         {
 
+        }
+
+        public void SetCanMove(bool isCanMove)
+        {
+            objFeet.SetActive(isCanMove);
         }
     }
 }

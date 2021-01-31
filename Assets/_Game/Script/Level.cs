@@ -15,6 +15,7 @@ namespace TC
 
         [Header("Debug")]
         public List<Character> listCharacter;
+        public Character characterOnMove;
         public List<Target> listTarget;
         public Vector2 levelSize;
         public Vector2 gridSize;
@@ -31,6 +32,11 @@ namespace TC
         // Update is called once per frame
         void Update()
         {
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene(0);
+            }
+
             if (isSolve) return;
 
             if (Input.GetKeyDown(KeyCode.LeftArrow))
@@ -85,6 +91,11 @@ namespace TC
                     character.grid = grid;
                     listCharacter.Add(character);
                     grids[grid.x, grid.y] = Constant.CHARACTER;
+                    if (character.isMoveFirst)
+                    {
+                        characterOnMove = character;
+                        characterOnMove.SetCanMove(true);
+                    }
                 }
                 else if (obj.name == Constant.TARGET)
                 {
@@ -117,12 +128,10 @@ namespace TC
 
         void MoveCharacter(Vector2Int direction)
         {
-            foreach (var character in listCharacter)
-            {
-                var charGrid = character.grid;
-                charGrid = GetGridMove(charGrid, direction);
-                character.transform.localPosition = GridToLocalPos(charGrid);
-            }
+            var charGrid = characterOnMove.grid;
+            var isChangeCharacter = false;
+            charGrid = GetGridMove(charGrid, direction, out isChangeCharacter);
+            characterOnMove.transform.localPosition = GridToLocalPos(charGrid);
 
             for (int x = 0; x < grids.GetLength(0); x++)
             {
@@ -146,56 +155,78 @@ namespace TC
                     if (character.grid == target.grid)
                     {
                         count++;
+                        character.isFinish = true;
                         break;
                     }
                 }
+            }
+
+            if (characterOnMove.isFinish)
+            {
+                isChangeCharacter = true;
             }
 
             if (count == listCharacter.Count)
             {
                 isSolve = true;
             }
+
+            if (isChangeCharacter && !isSolve)
+            {
+                characterOnMove.SetCanMove(false);
+                characterOnMove = listCharacter.Where(x => x != characterOnMove && !x.isFinish).FirstOrDefault();
+                characterOnMove?.SetCanMove(true);
+            }
         }
 
-        Vector2Int GetGridMove(Vector2Int from, Vector2Int direction)
+        bool IsCanMoveGrid(int x, int y)
+        {
+            if (x < 0 || x >= grids.GetLength(0)) return false;
+            if (y < 0 || y >= grids.GetLength(1)) return false;
+            if (grids[x, y] == Constant.WALL) return false;
+            if (grids[x, y] == Constant.CHARACTER) return false;
+            return true;
+        }
+
+        Vector2Int GetGridMove(Vector2Int from, Vector2Int direction, out bool isChangeCharacter)
         {
             var gridTo = from;
-            var countChar = 0;
+            isChangeCharacter = false;
+            var count = 0;
             while (direction.x != 0)
             {
                 var x = gridTo.x + direction.x;
-                if (x >= 0 && x < grids.GetLength(0) && grids[x, gridTo.y] != Constant.WALL)
+                if (IsCanMoveGrid(x, gridTo.y))
                 {
                     gridTo.x = x;
-                    if (grids[x, gridTo.y] == Constant.CHARACTER)
-                    {
-                        countChar++;
-                    }
+                    count++;
                 }
                 else
                 {
+                    if (grids[x, gridTo.y] == Constant.CHARACTER)
+                    {
+                        isChangeCharacter = true;
+                    }
                     break;
                 }
             }
-            gridTo.x -= direction.x * countChar;
-            countChar = 0;
             while (direction.y != 0)
             {
                 var y = gridTo.y + direction.y;
-                if (y >= 0 && y < grids.GetLength(1) && grids[gridTo.x, y] != Constant.WALL)
+                if (IsCanMoveGrid(gridTo.x, y))
                 {
                     gridTo.y = y;
-                    if (grids[gridTo.x, y] == Constant.CHARACTER)
-                    {
-                        countChar++;
-                    }
+                    count++;
                 }
                 else
                 {
+                    if (grids[gridTo.x, y] == Constant.CHARACTER)
+                    {
+                        isChangeCharacter = true;
+                    }
                     break;
                 }
             }
-            gridTo.y -= direction.y * countChar;
             return gridTo;
         }
     }
